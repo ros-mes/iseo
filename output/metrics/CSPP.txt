@@ -1,0 +1,5 @@
+Separator | Sampler | # Solved | # Thresholds | # Feas. solutions on thr. | Gap | Error | # Calls | # Iterations | Running time | # Calls to thr. | # Iterations to thr. | Running time to thr. | # Calls to opt. | # Iterations to opt. | Running time to opt.
+SEP | CUT | 6/30 | 0/30 | 0/30 | 10.16577 | 0.00222 | 2000.0 | None | 1479.67 | 1998.0 | None | 1477.67 | 247593.64 | None | 154587.88
+SEP | SIM | 0/30 | 0/30 | 0/30 | 69.16667 | 0.82324 | 2000.0 | None | None | 1998.0 | None | None | 3987.16 | None | None
+SVM | CUT | 7/30 | 0/30 | 0/30 | 10.68713 | 0.01916 | 2000.0 | None | 1575.57 | 1985.0 | None | 1560.57 | 283439.67 | None | 201258.11
+SVM | SIM | 0/30 | 0/30 | 0/30 | 13.51949 | 0.14529 | 2000.0 | None | None | 1998.0 | None | None | 3063.74 | None | None

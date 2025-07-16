@@ -1,0 +1,13 @@
+Type | Separator | Sampler | # Solved | # Thresholds | # Feas. solutions on thr. | Gap | Error | # Calls | # Iterations | Running time | # Calls to thr. | # Iterations to thr. | Running time to thr. | # Iterations to opt. | # Calls to opt. | Running time to opt.
+uncorrelated | SEP | CUT | 30/30 | 6/30 | 6/30 | 0.37655 | 0.0 | 1908.47 | 954.17 | 178336.73 | 568.33 | 283.67 | 10239.77 | 621.8 | 310.4 | 18432.8
+uncorrelated | SEP | SIM | 5/30 | 3/30 | 3/30 | 0.76191 | 0.05984 | 1949.77 | 974.87 | 1391.46 | 224.33 | 111.67 | 14.26 | 548.6 | 273.8 | 152.67
+uncorrelated | SVM | CUT | 26/30 | 4/30 | 4/30 | 0.4139 | 0.00014 | 2000.0 | 1000.0 | 160384.62 | 507.5 | 253.25 | 34233.89 | 826.38 | 412.69 | 39545.41
+uncorrelated | SVM | SIM | 4/30 | 3/30 | 3/30 | 0.69923 | 0.07492 | 2000.0 | 1000.33 | 7124.16 | 23.0 | 11.0 | 0.43 | 262.75 | 131.25 | 64.81
+weakly-correlated | SEP | CUT | 28/30 | 0/30 | 0/30 | 1.52127 | 6e-05 | 2000.0 | 1000.0 | 191069.56 | None | None | None | 1267.57 | 633.29 | 84958.0
+weakly-correlated | SEP | SIM | 0/30 | 0/30 | 0/30 | 2.143 | 0.06653 | 2000.0 | 1000.0 | 1658.1 | None | None | None | None | None | None
+weakly-correlated | SVM | CUT | 28/30 | 0/30 | 0/30 | 1.62489 | 9e-05 | 2000.0 | 1000.0 | 186140.92 | None | None | None | 1339.07 | 669.04 | 92720.09
+weakly-correlated | SVM | SIM | 0/30 | 0/30 | 0/30 | 1.92981 | 0.06737 | 2000.0 | 1000.07 | 7887.27 | None | None | None | None | None | None
+strongly-correlated | SEP | CUT | 0/30 | 0/30 | 0/30 | 1.56447 | 0.00049 | 2000.0 | 1000.0 | 198645.3 | None | None | None | None | None | None
+strongly-correlated | SEP | SIM | 0/30 | 0/30 | 0/30 | 2.20291 | 0.00234 | 2000.0 | 1000.0 | 2304.35 | None | None | None | None | None | None
+strongly-correlated | SVM | CUT | 0/30 | 0/30 | 0/30 | 2.89137 | 0.00081 | 2000.0 | 1000.0 | 203841.18 | None | None | None | None | None | None
+strongly-correlated | SVM | SIM | 0/30 | 0/30 | 0/30 | 1.99856 | 0.00197 | 2000.0 | 1000.13 | 7603.54 | None | None | None | None | None | None
