@@ -2,7 +2,7 @@
 
 ## Paper
 
-Anonymous author(s), Solving 0-1 integer programs with unknown knapsack constraints using membership oracles.
+Rosario Messana, Rui Chen, Andrea Lodi, Alberto Ceselli. Solving 0-1 integer programs with unknown knapsack constraints using membership oracles.
 
 ## Data
 
