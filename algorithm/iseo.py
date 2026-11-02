@@ -1,4 +1,17 @@
-"""ISEO: Interactive Sampling-Enhanced Optimization"""
+"""ISEO: Interactive Sampling-Enhanced Optimization.
+
+Main loop of the algorithm, which solves 0-1 integer programs with unknown knapsack constraints
+``w_bar[i] @ x[i] <= 1`` (``i = 0, ..., m - 1``), each accessible only through a membership oracle. At every
+iteration, ISEO:
+
+1. computes the surrogate weights ``w_hat[i]`` of every unknown constraint with a linear separator (SEP or SVM);
+2. selects a new point for every unknown constraint with a sampling strategy (CUT or SIM) and labels it;
+3. solves the problem with the surrogate constraints (optimizer) and labels the solution;
+4. updates the lower bound (value of the best positive point) and the upper bound (bounder).
+
+A sub-point dominated by a positive sub-point is labeled positive, and a sub-point dominating a negative sub-point
+is labeled negative, without calling the oracle.
+"""
 
 import logging
 import os
@@ -21,6 +34,17 @@ file_path = os.path.abspath(file_path)
 
 
 class ISEO:
+    """Interactive Sampling-Enhanced Optimization algorithm.
+
+    Args:
+        N: Oracle budget: the algorithm stops once an oracle has answered at least ``N`` queries.
+        thr: Relative gap threshold: the algorithm stops when ``(UB - LB) / LB <= thr``.
+        T: Maximum number of iterations.
+        separator_name: Linear separator, ``"SEP"`` or ``"SVM"``.
+        sampler_name: Sampling strategy, ``"CUT"`` or ``"SIM"``.
+        gurobi_environment: Gurobi environment in which all the models are built (``None`` for the default
+            environment).
+    """
 
     def __init__(self, N: int, thr: float, T: int, separator_name: str, sampler_name: str, gurobi_environment = None):
 
@@ -37,6 +61,15 @@ class ISEO:
         self.gurobi_environment = gurobi_environment
 
     def init_log(self, problem_name, instance_name):
+        """Directs the logging output to the log file of an instance.
+
+        Removes the file handlers of the root logger and adds one that writes, at level INFO, to
+        ``output/log/<separator_name>_<sampler_name>/<problem_name>/<instance_name>.log``.
+
+        Args:
+            problem_name: Name of the problem class, ``"CSPP"``, ``"GAP"`` or ``"KP"``.
+            instance_name: Name of the instance, used as the stem of the log file.
+        """
 
         log_dir = os.path.join(file_path, "../output/log/{}_{}/{}".format(
             self.separator_name, self.sampler_name, problem_name))
@@ -58,6 +91,34 @@ class ISEO:
         root_logger.setLevel(logging.INFO)
 
     def run(self, problem_name: str, instance_name: str, v: np.ndarray, w_bar: np.ndarray, labeled_points: dict):
+        """Runs ISEO on an instance.
+
+        The execution is logged to ``output/log/<separator_name>_<sampler_name>/<problem_name>/<instance_name>.log``
+        and its numerical trace (labeled points, surrogate weights, sampled and optimized points, bounds, oracle
+        calls and running time of every iteration) is saved to
+        ``output/h5/<separator_name>_<sampler_name>/<problem_name>/<instance_name>.h5``. The algorithm stops when
+        the relative gap is at most ``thr``, when an oracle has reached the budget ``N``, after ``T`` iterations,
+        after 500,000 seconds, or when a separation model fails.
+
+        Args:
+            problem_name: Name of the problem class, ``"CSPP"``, ``"GAP"`` or ``"KP"``.
+            instance_name: Name of the instance, used as the stem of the output files.
+            v: Objective coefficients, shape ``(m, n)``.
+            w_bar: Weights of the unknown constraints ``w_bar[i] @ x[i] <= 1``, shape ``(m, n)``. They are only
+                used to simulate the membership oracles.
+            labeled_points: Dictionary with keys ``"positive"`` and ``"negative"``, mapping to the arrays of
+                initially labeled positive and negative points, of shapes ``(k_pos, m, n)`` and ``(k_neg, m, n)``.
+                At least one positive point is required (e.g. the all-zeros point). The sub-points of the negative
+                points are labeled by the oracles at initialization. The dictionary is updated in place with the
+                points labeled during the run.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray]: Best positive point found ``x_hat``, shape ``(m, n)``, and final
+            surrogate weights ``w_hat``, shape ``(m, n)``.
+
+        Raises:
+            ModelResolutionFailedError: If the final separation model cannot be solved.
+        """
 
         start_time = time.time()
 

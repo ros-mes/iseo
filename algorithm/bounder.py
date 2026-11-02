@@ -1,4 +1,13 @@
-"""Bounder: CollegeStudyPlanBounder, GeneralizedAssignmentBounder, KnapsackBounder"""
+"""Bounders: CollegeStudyPlanBounder, GeneralizedAssignmentBounder, KnapsackBounder.
+
+A bounder computes an upper bound on the optimal value of a test problem with unknown knapsack constraints. It
+maximizes the objective over the solutions ``x`` that satisfy the known constraints, do not dominate any negative
+sub-point, and for which some weights ``w`` consistent with the labeled sub-points (``w @ p <= 1`` for every
+positive sub-point ``p`` and ``w @ q >= 1`` for every negative sub-point ``q``) satisfy ``w @ x <= 1``. Since the
+true weights are consistent with the labels, the optimal value of this nonconvex mixed-integer quadratic program
+is an upper bound on the optimal value of the problem. The model is solved by Gurobi with a limit of 50,000
+branch-and-bound nodes, and its dual bound, which remains valid when the node limit is reached, is returned.
+"""
 
 import os
 
@@ -11,12 +20,30 @@ file_path = os.path.abspath(file_path)
 
 
 class Bounder:
+    """Base class and factory of the bounders.
+
+    A bounder is obtained with ``Bounder(gurobi_environment=env).get_bounder(name)``.
+
+    Args:
+        name: Name of the problem class.
+        gurobi_environment: Gurobi environment in which the models are built (``None`` for the default
+            environment).
+    """
         
     def __init__(self, name: str = None, gurobi_environment = None):
         self.name = name
         self.gurobi_environment = gurobi_environment
 
     def get_bounder(self, name: str):
+        """Returns the bounder of the given problem class.
+
+        Args:
+            name: Name of the problem class, ``"CSPP"``, ``"GAP"`` or ``"KP"``.
+
+        Returns:
+            Bounder: Instance of :class:`CollegeStudyPlanBounder`, :class:`GeneralizedAssignmentBounder` or
+            :class:`KnapsackBounder` using the same Gurobi environment.
+        """
         assert name in {"CSPP", "GAP", "KP"}
 
         if name == "CSPP":
@@ -27,10 +54,37 @@ class Bounder:
             return KnapsackBounder(self.gurobi_environment)
 
     def bound(self, v: np.ndarray, labeled_sub_points: list):
+        """Computes an upper bound on the optimal value of the problem. Implemented by the subclasses.
+
+        Args:
+            v: Objective coefficients, shape ``(m, n)``.
+            labeled_sub_points: List of length ``m`` whose element ``i`` is a dictionary with keys ``"positive"``
+                and ``"negative"``, mapping to the arrays of positive and negative sub-points of constraint ``i``,
+                of shapes ``(k_pos_i, n)`` and ``(k_neg_i, n)``.
+
+        Returns:
+            float: Upper bound on the optimal value (dual bound of the bounding model).
+        """
         pass
         
         
 class CollegeStudyPlanBounder(Bounder):
+    """Bounder of the college study plan problem (CSPP), with a single unknown constraint (``m = 1``).
+
+    The known constraints are the prerequisites, corequisites and alternatives read from
+    ``data/csv/MIT_courses.csv``.
+
+    Args:
+        gurobi_environment: Gurobi environment in which the models are built (``None`` for the default
+            environment).
+
+    Attributes:
+        prerequisites (list): For each course, list of groups of course codes; if the course is taken, at least
+            one course of each group must be taken.
+        corequisites (list): For each course, list of groups of course codes, with the same meaning as
+            ``prerequisites``.
+        alternatives (list): For each course, list of course codes that cannot be taken together with it.
+    """
     
     def __init__(self, gurobi_environment = None):
         super().__init__("CSPP", gurobi_environment)
@@ -41,6 +95,17 @@ class CollegeStudyPlanBounder(Bounder):
         self.alternatives = [eval(a) for a in df.alternatives]
 
     def bound(self, v: np.ndarray, labeled_sub_points: list):
+        """Computes an upper bound on the optimal value of the college study plan problem.
+
+        Args:
+            v: Credits of the courses, shape ``(1, n)``.
+            labeled_sub_points: List of length 1 whose element is a dictionary with keys ``"positive"`` and
+                ``"negative"``, mapping to the arrays of positive and negative sub-points of the time budget
+                constraint, of shapes ``(k_pos, n)`` and ``(k_neg, n)``.
+
+        Returns:
+            float: Upper bound on the optimal value (dual bound of the bounding model).
+        """
         v = v[0]
 
         n = v.size
@@ -78,11 +143,31 @@ class CollegeStudyPlanBounder(Bounder):
         return model.ObjBound
 
 class GeneralizedAssignmentBounder(Bounder):
+    """Bounder of the generalized assignment problem (GAP), with one unknown capacity constraint per agent.
+
+    The weights ``w[i]`` of the capacity constraints are chosen independently for every agent ``i``, and the
+    known constraints assign every job to at most one agent.
+
+    Args:
+        gurobi_environment: Gurobi environment in which the models are built (``None`` for the default
+            environment).
+    """
     
     def __init__(self, gurobi_environment = None):
         super().__init__("GAP", gurobi_environment)
 
     def bound(self, v: np.ndarray, labeled_sub_points: list):
+        """Computes an upper bound on the optimal value of the generalized assignment problem.
+
+        Args:
+            v: Revenues of assigning each job to each agent, shape ``(m, n)``.
+            labeled_sub_points: List of length ``m`` whose element ``i`` is a dictionary with keys ``"positive"``
+                and ``"negative"``, mapping to the arrays of positive and negative sub-points of the capacity
+                constraint of agent ``i``, of shapes ``(k_pos_i, n)`` and ``(k_neg_i, n)``.
+
+        Returns:
+            float: Upper bound on the optimal value (dual bound of the bounding model).
+        """
         m = v.shape[0]
         n = v.shape[1]
 
@@ -116,11 +201,29 @@ class GeneralizedAssignmentBounder(Bounder):
 
 
 class KnapsackBounder(Bounder):
+    """Bounder of the knapsack problem (KP), with a single unknown constraint (``m = 1``) and no known
+    constraints.
+
+    Args:
+        gurobi_environment: Gurobi environment in which the models are built (``None`` for the default
+            environment).
+    """
 
     def __init__(self, gurobi_environment = None):
         super().__init__("KP", gurobi_environment)
 
     def bound(self, v: np.ndarray, labeled_sub_points: list):
+        """Computes an upper bound on the optimal value of the knapsack problem.
+
+        Args:
+            v: Values of the items, shape ``(1, n)``.
+            labeled_sub_points: List of length 1 whose element is a dictionary with keys ``"positive"`` and
+                ``"negative"``, mapping to the arrays of positive and negative sub-points of the knapsack
+                constraint, of shapes ``(k_pos, n)`` and ``(k_neg, n)``.
+
+        Returns:
+            float: Upper bound on the optimal value (dual bound of the bounding model).
+        """
         v = v[0]
 
         n = v.size
